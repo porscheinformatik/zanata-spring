@@ -1,5 +1,7 @@
 # Zanata Spring
 
+[![Build Status](https://travis-ci.org/porscheinformatik/zanata-spring.svg?branch=master)](https://travis-ci.org/porscheinformatik/zanata-spring)
+
 This is a (very) small library providing an Spring `MessageSource` that
 delagates to the [Zanata REST API](https://zanata.ci.cloudbees.com/job/zanata-api-site/site/zanata-common-api/rest-api-docs/index.html).
 
