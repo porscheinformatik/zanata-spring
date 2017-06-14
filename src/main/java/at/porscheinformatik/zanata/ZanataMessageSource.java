@@ -25,30 +25,59 @@ public class ZanataMessageSource extends AbstractMessageSource {
   private final Set<String> basenameSet = new LinkedHashSet<>(singletonList("messages"));
   private final Map<Locale, TranslationsResource[]> translationsCache = new HashMap<>();
 
+  /**
+   * @return the Zanata URL
+   */
   public String getZanataBaseUrl() {
     return zanataBaseUrl;
   }
 
+  /**
+   * Set Zanata URL.
+   *
+   * @param zanataBaseUrl the URL of your Zanata instance without trailing /
+   */
   public void setZanataBaseUrl(String zanataBaseUrl) {
     this.zanataBaseUrl = zanataBaseUrl;
   }
 
+  /**
+   * @return project id in Zanata
+   */
   public String getProject() {
     return project;
   }
 
+  /**
+   * Set project id.
+   *
+   * @param project project id in Zanata
+   */
   public void setProject(String project) {
     this.project = project;
   }
 
+  /**
+   * @return iteration/version in Zanata
+   */
   public String getIteration() {
     return iteration;
   }
 
+  /**
+   * Set iteration.
+   *
+   * @param iteration iteration/version in Zanata
+   */
   public void setIteration(String iteration) {
     this.iteration = iteration;
   }
 
+  /**
+   * Set multiple base names (message file resources)
+   *
+   * @param baseNames list of message resources
+   */
   public void setBaseNames(String... baseNames) {
     this.basenameSet.clear();
     for (String baseName : baseNames) {
@@ -56,10 +85,20 @@ public class ZanataMessageSource extends AbstractMessageSource {
     }
   }
 
+  /**
+   * Set single base name (message file resource)
+   *
+   * @param baseName message resource
+   */
   public void setBaseName(String baseName) {
     this.setBaseNames(baseName);
   }
 
+  /**
+   * Set the {@link RestTemplate} to use for getting data from Zanata REST API.
+   *
+   * @param restTemplate the {@link RestTemplate}
+   */
   public void setRestTemplate(RestTemplate restTemplate) {
     this.restTemplate = restTemplate;
   }
@@ -71,11 +110,14 @@ public class ZanataMessageSource extends AbstractMessageSource {
     return restTemplate;
   }
 
+  /**
+   * Clears the cache for all locales and message bundles.
+   */
   public void clearCache() {
     translationsCache.clear();
   }
 
-  public TranslationsResource[] loadTranslations(Locale locale) {
+  private TranslationsResource[] loadTranslations(Locale locale) {
     TranslationsResource[] translations = translationsCache.get(locale);
 
     if (translations != null) {
@@ -130,17 +172,26 @@ public class ZanataMessageSource extends AbstractMessageSource {
       .orElse(null);
   }
 
-  public static class TranslationsResource {
+  /**
+   * Represents the translation of a document into a single locale.
+   */
+  static class TranslationsResource {
     public List<TextFlowTarget> textFlowTargets = new ArrayList<>();
   }
 
-  public static class TextFlowTarget {
+  /**
+   * This class contains string contents for a single translatable message.
+   */
+  static class TextFlowTarget {
     public String resId;
     public ContentState state;
     public String content;
   }
 
-  public enum ContentState {
+  /**
+   * State of {@link TextFlowTarget}
+   */
+  enum ContentState {
     New, NeedReview, Translated, Approved, Rejected
   }
 }
