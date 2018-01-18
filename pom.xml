@@ -21,7 +21,7 @@
 
   <groupId>at.porscheinformatik.zanata</groupId>
   <artifactId>zanata-spring</artifactId>
-  <version>1.0.0.BUILD-SNAPSHOT</version>
+  <version>1.0.0.RELEASE</version>
   <packaging>jar</packaging>
 
   <licenses>
