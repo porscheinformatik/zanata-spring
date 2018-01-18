@@ -5,6 +5,19 @@
 
   <name>Zanta Spring Integration</name>
   <description>Provides a Spring MessageSource backed by a Zanata Server.</description>
+  <url>https://github.com/porscheinformatik/zanata-spring</url>
+
+  <organization>
+    <name>Porsche Informatik</name>
+    <url>https://www.porscheinformatik.at</url>
+  </organization>
+
+  <developers>
+    <developer>
+      <id>derkoe</id>
+      <name>Christian Köberl</name>
+    </developer>
+  </developers>
 
   <groupId>at.porscheinformatik.zanata</groupId>
   <artifactId>zanata-spring</artifactId>
@@ -21,7 +34,7 @@
   <scm>
     <connection>scm:git:https://github.com/porscheinformatik/zanata-spring.git</connection>
     <developerConnection>scm:git:https://github.com/porscheinformatik/zanata-spring.git</developerConnection>
-    <url>https://github.com/porscheinformatik/zanata-spring</url>
+    <url>https://github.com/porscheinformatik/zanata-spring.git</url>
   </scm>
 
   <properties>
