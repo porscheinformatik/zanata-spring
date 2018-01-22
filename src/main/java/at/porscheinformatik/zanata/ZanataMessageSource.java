@@ -9,13 +9,14 @@ import org.springframework.web.client.RestTemplate;
 
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
 
 /**
  * {@link MessageSource} loading texts from Zanata translation server via REST API.
  */
-public class ZanataMessageSource extends AbstractMessageSource {
+public class ZanataMessageSource extends AbstractMessageSource implements AllPropertiesSource {
 
   private RestOperations restTemplate;
   private String zanataBaseUrl;
@@ -114,6 +115,7 @@ public class ZanataMessageSource extends AbstractMessageSource {
    * Clears the cache for all locales and message bundles.
    */
   public void clearCache() {
+    logger.info("Going to clear cache...");
     translationsCache.clear();
   }
 
@@ -170,6 +172,22 @@ public class ZanataMessageSource extends AbstractMessageSource {
       .map(tf -> new MessageFormat(tf.content, locale))
       .findFirst()
       .orElse(null);
+  }
+
+  @Override
+  public Properties getAllProperties(Locale locale)
+  {
+    Properties result = new Properties();
+    final TranslationsResource[] translationsResources = loadTranslations(locale);
+    // for de_AT and de locales the translations for de_AT should not be overwritten by de translated ones
+    // de_AT will be the first entry in the list, de the second
+    if(translationsResources != null && translationsResources.length > 0) {
+      for(int i=0; i<translationsResources.length; i++) {
+        translationsResources[i].textFlowTargets.stream()
+          .collect(Collectors.toMap(t -> t.resId, t -> t.content)).forEach(result::putIfAbsent);
+      }
+    }
+    return result;
   }
 
   /**
