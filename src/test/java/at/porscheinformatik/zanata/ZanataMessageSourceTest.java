@@ -12,7 +12,9 @@ import org.springframework.test.web.client.response.DefaultResponseCreator;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Arrays;
 import java.util.Locale;
+import java.util.Properties;
 
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.anything;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -24,6 +26,8 @@ public class ZanataMessageSourceTest {
   private ZanataMessageSource messageSource;
   public static final ZanataMessageSource.TextFlowTarget TEXT_1 = new ZanataMessageSource.TextFlowTarget();
   public static final ZanataMessageSource.TextFlowTarget TEXT_2 = new ZanataMessageSource.TextFlowTarget();
+  public static final ZanataMessageSource.TextFlowTarget TEXT_3 = new ZanataMessageSource.TextFlowTarget();
+  public static final ZanataMessageSource.TextFlowTarget TEXT_4 = new ZanataMessageSource.TextFlowTarget();
 
   static {
     TEXT_1.resId = "text1";
@@ -32,6 +36,12 @@ public class ZanataMessageSourceTest {
     TEXT_2.resId = "text1";
     TEXT_2.content = "Hallo Welt 2";
     TEXT_2.state = ZanataMessageSource.ContentState.Translated;
+    TEXT_3.resId = "text3";
+    TEXT_3.content = "Hy there";
+    TEXT_3.state = ZanataMessageSource.ContentState.Translated;
+    TEXT_4.resId = "text3";
+    TEXT_4.content = "Hi deer";
+    TEXT_4.state = ZanataMessageSource.ContentState.Translated;
   }
 
   private RestTemplate restTemplate;
@@ -90,19 +100,29 @@ public class ZanataMessageSourceTest {
   @Test
   public void multipleBaseNames() throws JsonProcessingException {
     messageSource.setBaseNames("bundle1", "bundle2");
-    mockCall(Locale.FRENCH, TEXT_1, "bundle1");
-    mockCall(Locale.FRENCH, TEXT_2, "bundle2");
+    mockCall(Locale.FRENCH, "bundle1", TEXT_1);
+    mockCall(Locale.FRENCH, "bundle2", TEXT_2);
 
     assert "Hallo Welt".equals(messageSource.getMessage("text1", null, Locale.FRENCH));
   }
 
-  private void mockCall(Locale locale, ZanataMessageSource.TextFlowTarget textFlowTarget) throws JsonProcessingException {
-    mockCall(locale, textFlowTarget, "messages");
+  @Test
+  public void allProperties() throws JsonProcessingException {
+    mockCall(Locale.US, TEXT_4);
+    mockCall(Locale.ENGLISH, TEXT_1, TEXT_3);
+
+    final Properties allProperties = messageSource.getAllProperties(Locale.US);
+    assert "Hallo Welt".equals(allProperties.getProperty("text1"));
+    assert "Hi deer".equals(allProperties.getProperty("text3"));
   }
 
-  private void mockCall(Locale locale, ZanataMessageSource.TextFlowTarget text, String resource) throws JsonProcessingException {
+  private void mockCall(Locale locale, ZanataMessageSource.TextFlowTarget ... textFlowTarget) throws JsonProcessingException {
+    mockCall(locale, "messages", textFlowTarget);
+  }
+
+  private void mockCall(Locale locale, String resource, ZanataMessageSource.TextFlowTarget ...text) throws JsonProcessingException {
     ZanataMessageSource.TranslationsResource answer2 = new ZanataMessageSource.TranslationsResource();
-    answer2.textFlowTargets.add(text);
+    answer2.textFlowTargets.addAll(Arrays.asList(text));
     mockServer
       .expect(requestTo("https://my-zanata/zanata/rest/projects/p/"
         + messageSource.getProject()
