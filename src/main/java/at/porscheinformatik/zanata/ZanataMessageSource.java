@@ -15,6 +15,12 @@ import static java.util.Collections.singletonList;
 
 /**
  * {@link MessageSource} loading texts from Zanata translation server via REST API.
+ *
+ * <p>
+ * If you use the {@link ZanataMessageSource} with a parent
+ * {@link org.springframework.context.support.ReloadableResourceBundleMessageSource} and want to resolve all properties
+ * you can use the {@link AllPropertiesReloadableResourceBundleMessageSource} instead.
+ * </p>
  */
 public class ZanataMessageSource extends AbstractMessageSource implements AllPropertiesSource {
 
@@ -81,9 +87,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
    */
   public void setBaseNames(String... baseNames) {
     this.basenameSet.clear();
-    for (String baseName : baseNames) {
-      this.basenameSet.add(baseName);
-    }
+    Collections.addAll(this.basenameSet, baseNames);
   }
 
   /**
@@ -104,7 +108,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
     this.restTemplate = restTemplate;
   }
 
-  public RestOperations getRestTemplate() {
+  private RestOperations getRestTemplate() {
     if (restTemplate == null) {
       restTemplate = new RestTemplate();
     }
@@ -175,19 +179,23 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
   }
 
   @Override
-  public Properties getAllProperties(Locale locale)
-  {
-    Properties result = new Properties();
+  public Properties getAllProperties(Locale locale) {
+    Properties allProperties = new Properties();
+
     final TranslationsResource[] translationsResources = loadTranslations(locale);
-    // for de_AT and de locales the translations for de_AT should not be overwritten by de translated ones
-    // de_AT will be the first entry in the list, de the second
-    if(translationsResources != null && translationsResources.length > 0) {
-      for(int i=0; i<translationsResources.length; i++) {
-        translationsResources[i].textFlowTargets.stream()
-          .collect(Collectors.toMap(t -> t.resId, t -> t.content)).forEach(result::putIfAbsent);
+    if (translationsResources != null && translationsResources.length > 0) {
+      for (TranslationsResource translationsResource : translationsResources) {
+        translationsResource.textFlowTargets.stream()
+          .collect(Collectors.toMap(t -> t.resId, t -> t.content)).forEach(allProperties::putIfAbsent);
       }
     }
-    return result;
+
+    MessageSource parentMessageSource = getParentMessageSource();
+    if (parentMessageSource instanceof AllPropertiesSource) {
+      allProperties.putAll(((AllPropertiesSource) parentMessageSource).getAllProperties(locale));
+    }
+
+    return allProperties;
   }
 
   /**
