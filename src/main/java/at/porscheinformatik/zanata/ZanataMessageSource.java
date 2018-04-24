@@ -1,17 +1,26 @@
 package at.porscheinformatik.zanata;
 
+import static java.util.Collections.singletonList;
+
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.springframework.context.MessageSource;
 import org.springframework.context.support.AbstractMessageSource;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
-
-import java.text.MessageFormat;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static java.util.Collections.singletonList;
 
 /**
  * {@link MessageSource} loading texts from Zanata translation server via REST API.
@@ -192,7 +201,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
 
     MessageSource parentMessageSource = getParentMessageSource();
     if (parentMessageSource instanceof AllPropertiesSource) {
-      allProperties.putAll(((AllPropertiesSource) parentMessageSource).getAllProperties(locale));
+      ((AllPropertiesSource) parentMessageSource).getAllProperties(locale).forEach((key, value) -> allProperties.putIfAbsent(key, value));
     }
 
     return allProperties;
