@@ -116,18 +116,18 @@ public class ZanataMessageSourceTest {
     assert "Hi deer".equals(allProperties.getProperty("text3"));
   }
 
-  private void mockCall(Locale locale, ZanataMessageSource.TextFlowTarget ... textFlowTarget) throws JsonProcessingException {
+  private void mockCall(Locale locale, ZanataMessageSource.TextFlowTarget... textFlowTarget) throws JsonProcessingException {
     mockCall(locale, "messages", textFlowTarget);
   }
 
-  private void mockCall(Locale locale, String resource, ZanataMessageSource.TextFlowTarget ...text) throws JsonProcessingException {
+  private void mockCall(Locale locale, String resource, ZanataMessageSource.TextFlowTarget... text) throws JsonProcessingException {
     ZanataMessageSource.TranslationsResource answer2 = new ZanataMessageSource.TranslationsResource();
     answer2.textFlowTargets.addAll(Arrays.asList(text));
     mockServer
-      .expect(requestTo("https://my-zanata/zanata/rest/projects/p/"
-        + messageSource.getProject()
-        + "/iterations/i/master/r/" + resource
-        + "/translations/" + locale.toLanguageTag()))
-      .andRespond(withSuccess(objectMapper.writeValueAsString(answer2), MediaType.APPLICATION_JSON));
+        .expect(requestTo("https://my-zanata/zanata/rest/projects/p/"
+          + messageSource.getProject()
+          + "/iterations/i/master/r/" + resource
+          + "/translations/" + locale.toLanguageTag()))
+        .andRespond(withSuccess(objectMapper.writeValueAsString(answer2), MediaType.APPLICATION_JSON));
   }
 }

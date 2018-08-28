@@ -21,7 +21,7 @@
 
   <groupId>at.porscheinformatik.zanata</groupId>
   <artifactId>zanata-spring</artifactId>
-  <version>1.2.0.BUILD-SNAPSHOT</version>
+  <version>2.0.0.BUILD-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <licenses>
@@ -48,7 +48,7 @@
       <dependency>
         <groupId>io.spring.platform</groupId>
         <artifactId>platform-bom</artifactId>
-        <version>Brussels-SR6</version>
+        <version>Cairo-SR3</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -66,11 +66,11 @@
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
+      <artifactId>jackson-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
     </dependency>
 
     <dependency>

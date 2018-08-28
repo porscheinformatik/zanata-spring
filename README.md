@@ -19,16 +19,43 @@ a `ResourceBundleMessageSource` as the parent of the `ZanataMessageSource`.
 
 Here is a full example bean configuration for a Spring Boot app (with "messages" as the default bundle):
 
-    @Bean
-    public MessageSource messageSource()
-    {
-        ReloadableResourceBundleMessageSource localMessageSource = new ReloadableResourceBundleMessageSource();
-        localMessageSource.setBasename("messages");
-        localMessageSource.setFallbackToSystemLocale(false);
+```java
+@Bean
+public MessageSource messageSource() {
+    ReloadableResourceBundleMessageSource localMessageSource = new ReloadableResourceBundleMessageSource();
+    localMessageSource.setBasename("messages");
+    localMessageSource.setFallbackToSystemLocale(false);
 
-        ZanataMessageSource zanataMessageSource = new ZanataMessageSource();
-        zanataMessageSource.setZanataBaseUrl("https://my-zanata.internal");
-        zanataMessageSource.setProject("MY-ZANAZA-PROJECT");
-        zanataMessageSource.setParentMessageSource(localMessageSource);
-        return zanataMessageSource;
+    ZanataMessageSource zanataMessageSource = new ZanataMessageSource();
+    zanataMessageSource.setZanataBaseUrl("https://my-zanata.internal");
+    zanataMessageSource.setProject("MY-ZANAZA-PROJECT");
+    zanataMessageSource.setParentMessageSource(localMessageSource);
+    return zanataMessageSource;
+}
+```
+
+## Authentication
+
+If your Zanata instance needs authentication for accessing translations you can set the `RestTemplate` with the authentication info provided.
+
+Here is an example interceptor:
+
+```java
+public class AuthInterceptor implements ClientHttpRequestInterceptor {
+
+    private final String apiUser;
+    private final String apiKey;
+
+    public AuthInterceptor(String user, String apiKey) {
+        this.apiUser = user;
+        this.apiKey = apiKey;
     }
+
+    @Override
+    public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
+        request.getHeaders().add("X-Auth-User", apiUser);
+        request.getHeaders().add("X-Auth-Token", apiKey);
+        return execution.execute(request, body);
+    }
+}
+```
