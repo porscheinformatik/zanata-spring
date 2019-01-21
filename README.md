@@ -29,33 +29,12 @@ public MessageSource messageSource() {
     ZanataMessageSource zanataMessageSource = new ZanataMessageSource();
     zanataMessageSource.setZanataBaseUrl("https://my-zanata.internal");
     zanataMessageSource.setProject("MY-ZANAZA-PROJECT");
+    
+    //provide spring RestTemplate and apply ZanataAuthHeaderInterceptor
+    RestTemplate restTemplate = new RestTemplate();
+            restTemplate.getInterceptors()
+                .add(new ZanataAuthHeaderInterceptor("<username>", "<token>"));
     zanataMessageSource.setParentMessageSource(localMessageSource);
     return zanataMessageSource;
-}
-```
-
-## Authentication
-
-If your Zanata instance needs authentication for accessing translations you can set the `RestTemplate` with the authentication info provided.
-
-Here is an example interceptor:
-
-```java
-public class AuthInterceptor implements ClientHttpRequestInterceptor {
-
-    private final String apiUser;
-    private final String apiKey;
-
-    public AuthInterceptor(String user, String apiKey) {
-        this.apiUser = user;
-        this.apiKey = apiKey;
-    }
-
-    @Override
-    public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
-        request.getHeaders().add("X-Auth-User", apiUser);
-        request.getHeaders().add("X-Auth-Token", apiKey);
-        return execution.execute(request, body);
-    }
 }
 ```

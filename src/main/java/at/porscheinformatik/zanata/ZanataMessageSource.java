@@ -13,6 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.springframework.context.MessageSource;
@@ -39,7 +40,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
   private String iteration = "master";
 
   private final Set<String> basenameSet = new LinkedHashSet<>(singletonList("messages"));
-  private final Map<Locale, TranslationsResource[]> translationsCache = new HashMap<>();
+  private final Map<Locale, TranslationsResource[]> translationsCache = new ConcurrentHashMap<>();
 
   /**
    * @return the Zanata URL
