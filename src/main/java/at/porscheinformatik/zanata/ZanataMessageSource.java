@@ -1,12 +1,21 @@
 package at.porscheinformatik.zanata;
 
-import static java.util.Collections.singletonList;
+import org.springframework.context.MessageSource;
+import org.springframework.context.support.AbstractMessageSource;
+import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestOperations;
+import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -16,12 +25,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import org.springframework.context.MessageSource;
-import org.springframework.context.support.AbstractMessageSource;
-import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestOperations;
-import org.springframework.web.client.RestTemplate;
+import static java.util.Collections.singletonList;
 
 /**
  * {@link MessageSource} loading texts from Zanata translation server via REST API.
@@ -164,14 +168,22 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
   }
 
   private TranslationsResource loadTranslation(String language, String resourceName) {
+
+    String uriString = String.format("%s/rest/projects/p/%s/iterations/i/%s/r/%s/translations/%s",
+      zanataBaseUrl, project, iteration, resourceName, language);
+
     try {
-      return getRestTemplate().getForObject(zanataBaseUrl
-        + "/rest/projects/p/" + project
-        + "/iterations/i/" + iteration
-        + "/r/" + resourceName
-        + "/translations/" + language, TranslationsResource.class);
+      URI uri = new URI(uriString);
+      RequestEntity request = RequestEntity.get(uri).accept(MediaType.APPLICATION_JSON).build();
+
+      ResponseEntity<TranslationsResource> response = getRestTemplate()
+        .exchange(request, TranslationsResource.class);
+
+      return response.getBody();
     } catch (RestClientException e) {
-      logger.warn("Could not load translations for lang " + language, e);
+      logger.warn("Could not load translations for lang: " + language, e);
+    } catch (URISyntaxException e) {
+      logger.error("Provided URI is not valid: " + uriString);
     }
     return null;
   }

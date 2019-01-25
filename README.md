@@ -30,10 +30,11 @@ public MessageSource messageSource() {
     zanataMessageSource.setZanataBaseUrl("https://my-zanata.internal");
     zanataMessageSource.setProject("MY-ZANAZA-PROJECT");
     
-    //provide spring RestTemplate and apply ZanataAuthHeaderInterceptor
     RestTemplate restTemplate = new RestTemplate();
             restTemplate.getInterceptors()
                 .add(new ZanataAuthHeaderInterceptor("<username>", "<token>"));
+            
+    zanataMessageSource.setRestTemplate(restTemplate);           
     zanataMessageSource.setParentMessageSource(localMessageSource);
     return zanataMessageSource;
 }

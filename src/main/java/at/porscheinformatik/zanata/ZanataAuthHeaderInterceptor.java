@@ -1,13 +1,11 @@
 package at.porscheinformatik.zanata;
 
 import org.springframework.http.HttpRequest;
-import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 
 import java.io.IOException;
-import java.util.Collections;
 
 public class ZanataAuthHeaderInterceptor implements ClientHttpRequestInterceptor {
 
@@ -25,7 +23,6 @@ public class ZanataAuthHeaderInterceptor implements ClientHttpRequestInterceptor
 
     httpRequest.getHeaders().add("X-Auth-User", apiUser);
     httpRequest.getHeaders().add("X-Auth-Token", apiToken);
-    httpRequest.getHeaders().setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
     return clientHttpRequestExecution.execute(httpRequest, bytes);
   }
