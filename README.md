@@ -7,7 +7,17 @@ delagates to the [Zanata REST API](https://zanata.ci.cloudbees.com/job/zanata-ap
 
 ## Usage
 
-Simply declare the `ZanataMessageSource` as a bean. You can configure the `MessageSource` via:
+Add the Maven dependency to your project (find the current version on [Maven Central](https://search.maven.org/search?q=g:at.porscheinformatik.zanata%20AND%20a:zanata-spring&core=gav)):
+
+```xml
+<dependency>
+  <groupId>at.porscheinformatik.zanata</groupId>
+  <artifactId>zanata-spring</artifactId>
+  <version>${zanata-spring.version}</version>
+</dependency>
+```
+
+Then declare the `ZanataMessageSource` as a bean. You can configure the `MessageSource` via:
 
  - zanataBaseUrl (required) - the base URL of your Zanaza instance 
  - project (required) - the project id
@@ -37,3 +47,8 @@ public MessageSource messageSource() {
 ## Authentication
 
 If your Zanata instance needs authentication for accessing translations you can call `ZanataMessageSource#useAuthentcation` or provide your own `RestTemplate` and add a `ZanataAuthenticationInterceptor`.
+
+
+## Changes
+
+See [changelog](CHANGELOG.md).
