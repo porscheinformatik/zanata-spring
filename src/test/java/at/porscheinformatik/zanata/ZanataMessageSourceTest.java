@@ -1,6 +1,7 @@
 package at.porscheinformatik.zanata;
 
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.anything;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -24,10 +25,10 @@ public class ZanataMessageSourceTest {
 
   private ObjectMapper objectMapper = new ObjectMapper();
   private ZanataMessageSource messageSource;
-  public static final ZanataMessageSource.TextFlowTarget TEXT_1 = new ZanataMessageSource.TextFlowTarget();
-  public static final ZanataMessageSource.TextFlowTarget TEXT_2 = new ZanataMessageSource.TextFlowTarget();
-  public static final ZanataMessageSource.TextFlowTarget TEXT_3 = new ZanataMessageSource.TextFlowTarget();
-  public static final ZanataMessageSource.TextFlowTarget TEXT_4 = new ZanataMessageSource.TextFlowTarget();
+  private static final ZanataMessageSource.TextFlowTarget TEXT_1 = new ZanataMessageSource.TextFlowTarget();
+  private static final ZanataMessageSource.TextFlowTarget TEXT_2 = new ZanataMessageSource.TextFlowTarget();
+  private static final ZanataMessageSource.TextFlowTarget TEXT_3 = new ZanataMessageSource.TextFlowTarget();
+  private static final ZanataMessageSource.TextFlowTarget TEXT_4 = new ZanataMessageSource.TextFlowTarget();
 
   static {
     TEXT_1.resId = "text1";
@@ -44,7 +45,6 @@ public class ZanataMessageSourceTest {
     TEXT_4.state = ZanataMessageSource.ContentState.Translated;
   }
 
-  private RestTemplate restTemplate;
   private MockRestServiceServer mockServer;
 
   @Before
@@ -52,9 +52,12 @@ public class ZanataMessageSourceTest {
     messageSource = new ZanataMessageSource();
     messageSource.setProject("MyApp");
     messageSource.setZanataBaseUrl("https://my-zanata/zanata");
-    restTemplate = new RestTemplate();
-    mockServer = MockRestServiceServer.createServer(restTemplate);
+    messageSource.setIteration("myiteration");
+    RestTemplate restTemplate = new RestTemplate();
     messageSource.setRestTemplate(restTemplate);
+    messageSource.useAuthentcation("user", "token");
+
+    mockServer = MockRestServiceServer.createServer(restTemplate);
   }
 
   @After
@@ -116,6 +119,16 @@ public class ZanataMessageSourceTest {
     assert "Hi deer".equals(allProperties.getProperty("text3"));
   }
 
+  @Test
+  public void withAuthentication() {
+    mockServer
+      .expect(header("X-Auth-User", "user"))
+      .andExpect(header("X-Auth-Token", "token"))
+      .andRespond(withSuccess());
+
+    messageSource.getAllProperties(Locale.GERMAN);
+  }
+
   private void mockCall(Locale locale, ZanataMessageSource.TextFlowTarget... textFlowTarget) throws JsonProcessingException {
     mockCall(locale, "messages", textFlowTarget);
   }
@@ -126,7 +139,7 @@ public class ZanataMessageSourceTest {
     mockServer
         .expect(requestTo("https://my-zanata/zanata/rest/projects/p/"
           + messageSource.getProject()
-          + "/iterations/i/master/r/" + resource
+          + "/iterations/i/myiteration/r/" + resource
           + "/translations/" + locale.toLanguageTag()))
         .andRespond(withSuccess(objectMapper.writeValueAsString(answer2), MediaType.APPLICATION_JSON));
   }

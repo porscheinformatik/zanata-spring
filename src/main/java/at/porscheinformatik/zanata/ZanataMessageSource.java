@@ -2,44 +2,46 @@ package at.porscheinformatik.zanata;
 
 import static java.util.Collections.singletonList;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
 import org.springframework.context.MessageSource;
 import org.springframework.context.support.AbstractMessageSource;
+import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 
 /**
  * {@link MessageSource} loading texts from Zanata translation server via REST API.
  *
  * <p>
- * If you use the {@link ZanataMessageSource} with a parent
- * {@link org.springframework.context.support.ReloadableResourceBundleMessageSource} and want to resolve all properties
- * you can use the {@link AllPropertiesReloadableResourceBundleMessageSource} instead.
+ * If you use the {@link ZanataMessageSource} with a parent {@link org.springframework.context.support.ReloadableResourceBundleMessageSource}
+ * and want to resolve all properties you can use the {@link AllPropertiesReloadableResourceBundleMessageSource}
+ * instead.
  * </p>
  */
 public class ZanataMessageSource extends AbstractMessageSource implements AllPropertiesSource {
 
-  private RestOperations restTemplate;
+  private RestTemplate restTemplate;
   private String zanataBaseUrl;
   private String project;
   private String iteration = "master";
 
   private final Set<String> basenameSet = new LinkedHashSet<>(singletonList("messages"));
-  private final Map<Locale, TranslationsResource[]> translationsCache = new HashMap<>();
+  private final Map<Locale, TranslationsResource[]> translationsCache = new ConcurrentHashMap<>();
 
   /**
    * @return the Zanata URL
@@ -96,7 +98,9 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
    */
   public void setBaseNames(String... baseNames) {
     this.basenameSet.clear();
-    Collections.addAll(this.basenameSet, baseNames);
+    for (String baseName : baseNames) {
+      this.basenameSet.add(baseName);
+    }
   }
 
   /**
@@ -105,7 +109,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
    * @param baseName message resource
    */
   public void setBaseName(String baseName) {
-    this.setBaseNames(baseName);
+    setBaseNames(baseName);
   }
 
   /**
@@ -114,14 +118,25 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
    * @param restTemplate the {@link RestTemplate}
    */
   public void setRestTemplate(RestTemplate restTemplate) {
+    if (this.restTemplate != null) {
+      throw new IllegalStateException("Rest template already set (maybe throgh useAuthentcation(.");
+    }
     this.restTemplate = restTemplate;
   }
 
-  private RestOperations getRestTemplate() {
+  /**
+   * Sets {@link ZanataAuthenticationInterceptor} for calling the REST API. <b>Be aware</b>: this
+   * replaces all interceptors in the {@link RestTemplate}.
+   *
+   * @param authUser Zanata API user
+   * @param authToken Zanata API token
+   */
+  public void useAuthentcation(String authUser, String authToken) {
     if (restTemplate == null) {
       restTemplate = new RestTemplate();
     }
-    return restTemplate;
+    restTemplate.setInterceptors(
+      singletonList(new ZanataAuthenticationInterceptor(authUser, authToken)));
   }
 
   /**
@@ -144,7 +159,8 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
     for (String baseName : basenameSet) {
 
       if (!StringUtils.isEmpty(locale.getCountry())) {
-        TranslationsResource translation = loadTranslation(locale.getLanguage() + "-" + locale.getCountry(), baseName);
+        TranslationsResource translation = loadTranslation(
+          locale.getLanguage() + "-" + locale.getCountry(), baseName);
         if (translation != null) {
           translationList.add(translation);
         }
@@ -164,12 +180,23 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
 
   private TranslationsResource loadTranslation(String language, String resourceName) {
     try {
-      return getRestTemplate().getForObject(zanataBaseUrl
+      URI uri = new URI(zanataBaseUrl
         + "/rest/projects/p/" + project
         + "/iterations/i/" + iteration
         + "/r/" + resourceName
-        + "/translations/" + language, TranslationsResource.class);
-    } catch (RestClientException e) {
+        + "/translations/" + language);
+
+      RequestEntity request = RequestEntity.get(uri).accept(MediaType.APPLICATION_JSON).build();
+
+      if (restTemplate == null) {
+        restTemplate = new RestTemplate();
+      }
+
+      ResponseEntity<TranslationsResource> response =
+        restTemplate.exchange(request, TranslationsResource.class);
+
+      return response.getBody();
+    } catch (RestClientException | URISyntaxException e) {
       logger.warn("Could not load translations for lang " + language, e);
     }
     return null;
@@ -195,13 +222,15 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
     if (translationsResources != null && translationsResources.length > 0) {
       for (TranslationsResource translationsResource : translationsResources) {
         translationsResource.textFlowTargets.stream()
-          .collect(Collectors.toMap(t -> t.resId, t -> t.content)).forEach(allProperties::putIfAbsent);
+          .collect(Collectors.toMap(t -> t.resId, t -> t.content))
+          .forEach(allProperties::putIfAbsent);
       }
     }
 
     MessageSource parentMessageSource = getParentMessageSource();
     if (parentMessageSource instanceof AllPropertiesSource) {
-      ((AllPropertiesSource) parentMessageSource).getAllProperties(locale).forEach((key, value) -> allProperties.putIfAbsent(key, value));
+      ((AllPropertiesSource) parentMessageSource).getAllProperties(locale)
+        .forEach(allProperties::putIfAbsent);
     }
 
     return allProperties;
