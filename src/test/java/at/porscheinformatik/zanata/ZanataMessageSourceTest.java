@@ -138,7 +138,7 @@ public class ZanataMessageSourceTest {
     messageSource.getAllProperties(Locale.GERMAN);
   }
 
-  @Test(expected=NoSuchMessageException.class)
+  @Test(expected = NoSuchMessageException.class)
   public void testLanguages() throws JsonProcessingException {
     Locale hu = new Locale("hu", "HU");
     mockCall(Locale.GERMAN.toLanguageTag(), Locale.US.toLanguageTag());
@@ -147,22 +147,24 @@ public class ZanataMessageSourceTest {
 
     assert "Hallo Welt".equals(messageSource.getMessage("text1", null, Locale.GERMAN));
     assert "Hy there".equals(messageSource.getMessage("text3", null, Locale.US));
-    messageSource.getMessage("text3", null, hu);  // NoSuchMessageException
+    messageSource.getMessage("text3", null, hu); // NoSuchMessageException
   }
 
-  private void mockCall(Locale locale, ZanataMessageSource.TextFlowTarget... textFlowTarget) throws JsonProcessingException {
+  private void mockCall(Locale locale, ZanataMessageSource.TextFlowTarget... textFlowTarget)
+      throws JsonProcessingException {
     mockCall(locale, "messages", textFlowTarget);
   }
 
-  private void mockCall(Locale locale, String resource, ZanataMessageSource.TextFlowTarget... text) throws JsonProcessingException {
+  private void mockCall(Locale locale, String resource, ZanataMessageSource.TextFlowTarget... text)
+      throws JsonProcessingException {
     ZanataMessageSource.TranslationsResource answer2 = new ZanataMessageSource.TranslationsResource();
     answer2.textFlowTargets.addAll(Arrays.asList(text));
     mockServer
-        .expect(requestTo("https://my-zanata/zanata/rest/projects/p/"
-          + messageSource.getProject()
-          + "/iterations/i/myiteration/r/" + resource
-          + "/translations/" + locale.toLanguageTag()))
-        .andRespond(withSuccess(objectMapper.writeValueAsString(answer2), MediaType.APPLICATION_JSON));
+      .expect(requestTo("https://my-zanata/zanata/rest/projects/p/"
+        + messageSource.getProject()
+        + "/iterations/i/myiteration/r/" + resource
+        + "/translations/" + locale.toLanguageTag()))
+      .andRespond(withSuccess(objectMapper.writeValueAsString(answer2), MediaType.APPLICATION_JSON));
   }
 
   private void mockCall(String... localeIds) throws JsonProcessingException {

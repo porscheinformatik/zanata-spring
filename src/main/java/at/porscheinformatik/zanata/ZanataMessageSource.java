@@ -138,8 +138,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
     if (restTemplate == null) {
       restTemplate = new RestTemplate();
     }
-    restTemplate.setInterceptors(
-      singletonList(new ZanataAuthenticationInterceptor(authUser, authToken)));
+    restTemplate.setInterceptors(singletonList(new ZanataAuthenticationInterceptor(authUser, authToken)));
   }
 
   /**
@@ -147,7 +146,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
    */
   public void clearCache() {
     logger.info("Going to clear cache...");
-    synchronized(existingLocalesLock) {
+    synchronized (existingLocalesLock) {
       existingLocales = null;
     }
     translationsCache.clear();
@@ -165,8 +164,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
     for (String baseName : basenameSet) {
 
       if (!StringUtils.isEmpty(locale.getCountry())) {
-        TranslationsResource translation = loadTranslation(
-          locale.getLanguage() + "-" + locale.getCountry(), baseName);
+        TranslationsResource translation = loadTranslation(locale.getLanguage() + "-" + locale.getCountry(), baseName);
         if (translation != null) {
           translationList.add(translation);
         }
@@ -185,7 +183,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
   }
 
   private TranslationsResource loadTranslation(String language, String resourceName) {
-    synchronized(existingLocalesLock) {
+    synchronized (existingLocalesLock) {
       if (existingLocales == null) {
         existingLocales = Arrays.stream(loadLocales())
           .map(locale -> locale.localeId)
@@ -210,8 +208,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
       if (restTemplate == null) {
         restTemplate = new RestTemplate();
       }
-      ResponseEntity<TranslationsResource> response =
-        restTemplate.exchange(request, TranslationsResource.class);
+      ResponseEntity<TranslationsResource> response = restTemplate.exchange(request, TranslationsResource.class);
 
       return response.getBody();
     } catch (RestClientException | URISyntaxException e) {
@@ -233,8 +230,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
         restTemplate = new RestTemplate();
       }
 
-      ResponseEntity<LocaleDetails[]> response =
-        restTemplate.exchange(request, LocaleDetails[].class);
+      ResponseEntity<LocaleDetails[]> response = restTemplate.exchange(request, LocaleDetails[].class);
 
       return response.getBody();
     } catch (RestClientException | URISyntaxException e) {
