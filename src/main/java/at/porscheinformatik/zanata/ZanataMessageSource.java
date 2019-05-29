@@ -7,7 +7,6 @@ import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -41,8 +40,9 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
   private String zanataBaseUrl;
   private String project;
   private String iteration = "master";
-  private Set<String> existingLocales = null;
 
+  private Set<String> existingLocales;
+  private final Object existingLocalesLock = new Object();
   private final Set<String> basenameSet = new LinkedHashSet<>(singletonList("messages"));
   private final Map<Locale, TranslationsResource[]> translationsCache = new ConcurrentHashMap<>();
 
@@ -147,6 +147,9 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
    */
   public void clearCache() {
     logger.info("Going to clear cache...");
+    synchronized(existingLocalesLock) {
+      existingLocales = null;
+    }
     translationsCache.clear();
   }
 
@@ -182,18 +185,17 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
   }
 
   private TranslationsResource loadTranslation(String language, String resourceName) {
-    if (existingLocales == null) {
-      LocaleDetails[] localeDetails = loadLocales();
-      Set<String> loadedLocales = new HashSet<>();
-      if (localeDetails != null) {
-        Arrays.stream(localeDetails).forEach(locale -> loadedLocales.add(locale.localeId));
+    synchronized(existingLocalesLock) {
+      if (existingLocales == null) {
+        existingLocales = Arrays.stream(loadLocales())
+          .map(locale -> locale.localeId)
+          .collect(Collectors.toSet());
       }
-      existingLocales = loadedLocales;
-    }
 
-    if (!existingLocales.contains(language)) {
-      logger.info("Locale not exists " + language);
-      return null;
+      if (!existingLocales.contains(language)) {
+        logger.info("Locale not exists " + language);
+        return null;
+      }
     }
 
     try {
@@ -238,7 +240,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
     } catch (RestClientException | URISyntaxException e) {
       logger.warn("Could not load languages", e);
     }
-    return null;
+    return new LocaleDetails[0];
   }
 
   @Override

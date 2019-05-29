@@ -81,6 +81,7 @@ public class ZanataMessageSourceTest {
   public void clearCache() throws JsonProcessingException {
     mockCall(Locale.GERMAN.toLanguageTag());
     mockCall(Locale.GERMAN, TEXT_1);
+    mockCall(Locale.GERMAN.toLanguageTag());
     mockCall(Locale.GERMAN, TEXT_1);
 
     assert "Hallo Welt".equals(messageSource.getMessage("text1", null, Locale.GERMAN));
