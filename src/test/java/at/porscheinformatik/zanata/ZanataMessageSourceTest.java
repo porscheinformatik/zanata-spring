@@ -6,8 +6,10 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Before;
@@ -67,6 +69,7 @@ public class ZanataMessageSourceTest {
 
   @Test
   public void simpleReseourceAndCache() throws JsonProcessingException {
+    mockCall(Locale.GERMAN.toLanguageTag());
     mockCall(Locale.GERMAN, TEXT_1);
 
     assert "Hallo Welt".equals(messageSource.getMessage("text1", null, Locale.GERMAN));
@@ -76,7 +79,9 @@ public class ZanataMessageSourceTest {
 
   @Test
   public void clearCache() throws JsonProcessingException {
+    mockCall(Locale.GERMAN.toLanguageTag());
     mockCall(Locale.GERMAN, TEXT_1);
+    mockCall(Locale.GERMAN.toLanguageTag());
     mockCall(Locale.GERMAN, TEXT_1);
 
     assert "Hallo Welt".equals(messageSource.getMessage("text1", null, Locale.GERMAN));
@@ -86,7 +91,7 @@ public class ZanataMessageSourceTest {
 
   @Test
   public void langAndCountry() throws JsonProcessingException {
-
+    mockCall(Locale.GERMAN.toLanguageTag(), Locale.GERMANY.toLanguageTag());
     mockCall(Locale.GERMANY, TEXT_2);
     mockCall(Locale.GERMAN, TEXT_1);
 
@@ -94,7 +99,8 @@ public class ZanataMessageSourceTest {
   }
 
   @Test(expected = NoSuchMessageException.class)
-  public void httpError() {
+  public void httpError() throws JsonProcessingException {
+    mockCall(Locale.ENGLISH.toLanguageTag());
     mockServer.expect(anything()).andRespond(MockRestResponseCreators.withServerError());
 
     messageSource.getMessage("text1", null, Locale.ENGLISH);
@@ -102,6 +108,7 @@ public class ZanataMessageSourceTest {
 
   @Test
   public void multipleBaseNames() throws JsonProcessingException {
+    mockCall(Locale.FRENCH.toLanguageTag());
     messageSource.setBaseNames("bundle1", "bundle2");
     mockCall(Locale.FRENCH, "bundle1", TEXT_1);
     mockCall(Locale.FRENCH, "bundle2", TEXT_2);
@@ -111,6 +118,7 @@ public class ZanataMessageSourceTest {
 
   @Test
   public void allProperties() throws JsonProcessingException {
+    mockCall(Locale.US.toLanguageTag(), Locale.ENGLISH.toLanguageTag());
     mockCall(Locale.US, TEXT_4);
     mockCall(Locale.ENGLISH, TEXT_1, TEXT_3);
 
@@ -120,7 +128,8 @@ public class ZanataMessageSourceTest {
   }
 
   @Test
-  public void withAuthentication() {
+  public void withAuthentication() throws JsonProcessingException {
+    mockCall(Locale.GERMAN.toLanguageTag());
     mockServer
       .expect(header("X-Auth-User", "user"))
       .andExpect(header("X-Auth-Token", "token"))
@@ -129,18 +138,45 @@ public class ZanataMessageSourceTest {
     messageSource.getAllProperties(Locale.GERMAN);
   }
 
-  private void mockCall(Locale locale, ZanataMessageSource.TextFlowTarget... textFlowTarget) throws JsonProcessingException {
+  @Test(expected = NoSuchMessageException.class)
+  public void testLanguages() throws JsonProcessingException {
+    Locale hu = new Locale("hu", "HU");
+    mockCall(Locale.GERMAN.toLanguageTag(), Locale.US.toLanguageTag());
+    mockCall(Locale.GERMAN, TEXT_1);
+    mockCall(Locale.US, TEXT_3);
+
+    assert "Hallo Welt".equals(messageSource.getMessage("text1", null, Locale.GERMAN));
+    assert "Hy there".equals(messageSource.getMessage("text3", null, Locale.US));
+    messageSource.getMessage("text3", null, hu); // NoSuchMessageException
+  }
+
+  private void mockCall(Locale locale, ZanataMessageSource.TextFlowTarget... textFlowTarget)
+      throws JsonProcessingException {
     mockCall(locale, "messages", textFlowTarget);
   }
 
-  private void mockCall(Locale locale, String resource, ZanataMessageSource.TextFlowTarget... text) throws JsonProcessingException {
+  private void mockCall(Locale locale, String resource, ZanataMessageSource.TextFlowTarget... text)
+      throws JsonProcessingException {
     ZanataMessageSource.TranslationsResource answer2 = new ZanataMessageSource.TranslationsResource();
     answer2.textFlowTargets.addAll(Arrays.asList(text));
     mockServer
-        .expect(requestTo("https://my-zanata/zanata/rest/projects/p/"
-          + messageSource.getProject()
-          + "/iterations/i/myiteration/r/" + resource
-          + "/translations/" + locale.toLanguageTag()))
-        .andRespond(withSuccess(objectMapper.writeValueAsString(answer2), MediaType.APPLICATION_JSON));
+      .expect(requestTo("https://my-zanata/zanata/rest/projects/p/"
+        + messageSource.getProject()
+        + "/iterations/i/myiteration/r/" + resource
+        + "/translations/" + locale.toLanguageTag()))
+      .andRespond(withSuccess(objectMapper.writeValueAsString(answer2), MediaType.APPLICATION_JSON));
+  }
+
+  private void mockCall(String... localeIds) throws JsonProcessingException {
+    List<ZanataMessageSource.LocaleDetails> answer = Arrays.stream(localeIds).map(localId -> {
+      ZanataMessageSource.LocaleDetails detail = new ZanataMessageSource.LocaleDetails();
+      detail.localeId = localId;
+      return detail;
+    }).collect(Collectors.toList());
+    mockServer
+      .expect(requestTo("https://my-zanata/zanata/rest/projects/p/"
+        + messageSource.getProject()
+        + "/iterations/i/myiteration/locales"))
+      .andRespond(withSuccess(objectMapper.writeValueAsString(answer.toArray()), MediaType.APPLICATION_JSON));
   }
 }

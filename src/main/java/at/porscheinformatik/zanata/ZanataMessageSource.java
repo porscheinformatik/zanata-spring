@@ -15,6 +15,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
 import org.springframework.context.MessageSource;
 import org.springframework.context.support.AbstractMessageSource;
 import org.springframework.http.MediaType;
@@ -40,6 +41,8 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
   private String project;
   private String iteration = "master";
 
+  private Set<String> existingLocales;
+  private final Object existingLocalesLock = new Object();
   private final Set<String> basenameSet = new LinkedHashSet<>(singletonList("messages"));
   private final Map<Locale, TranslationsResource[]> translationsCache = new ConcurrentHashMap<>();
 
@@ -135,8 +138,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
     if (restTemplate == null) {
       restTemplate = new RestTemplate();
     }
-    restTemplate.setInterceptors(
-      singletonList(new ZanataAuthenticationInterceptor(authUser, authToken)));
+    restTemplate.setInterceptors(singletonList(new ZanataAuthenticationInterceptor(authUser, authToken)));
   }
 
   /**
@@ -144,6 +146,9 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
    */
   public void clearCache() {
     logger.info("Going to clear cache...");
+    synchronized (existingLocalesLock) {
+      existingLocales = null;
+    }
     translationsCache.clear();
   }
 
@@ -159,8 +164,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
     for (String baseName : basenameSet) {
 
       if (!StringUtils.isEmpty(locale.getCountry())) {
-        TranslationsResource translation = loadTranslation(
-          locale.getLanguage() + "-" + locale.getCountry(), baseName);
+        TranslationsResource translation = loadTranslation(locale.getLanguage() + "-" + locale.getCountry(), baseName);
         if (translation != null) {
           translationList.add(translation);
         }
@@ -179,6 +183,19 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
   }
 
   private TranslationsResource loadTranslation(String language, String resourceName) {
+    synchronized (existingLocalesLock) {
+      if (existingLocales == null) {
+        existingLocales = Arrays.stream(loadLocales())
+          .map(locale -> locale.localeId)
+          .collect(Collectors.toSet());
+      }
+
+      if (!existingLocales.contains(language)) {
+        logger.info("Locale not exists " + language);
+        return null;
+      }
+    }
+
     try {
       URI uri = new URI(zanataBaseUrl
         + "/rest/projects/p/" + project
@@ -191,15 +208,35 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
       if (restTemplate == null) {
         restTemplate = new RestTemplate();
       }
-
-      ResponseEntity<TranslationsResource> response =
-        restTemplate.exchange(request, TranslationsResource.class);
+      ResponseEntity<TranslationsResource> response = restTemplate.exchange(request, TranslationsResource.class);
 
       return response.getBody();
     } catch (RestClientException | URISyntaxException e) {
       logger.warn("Could not load translations for lang " + language, e);
     }
     return null;
+  }
+
+  private LocaleDetails[] loadLocales() {
+    try {
+      URI uri = new URI(zanataBaseUrl
+        + "/rest/projects/p/" + project
+        + "/iterations/i/" + iteration
+        + "/locales");
+
+      RequestEntity request = RequestEntity.get(uri).accept(MediaType.APPLICATION_JSON).build();
+
+      if (restTemplate == null) {
+        restTemplate = new RestTemplate();
+      }
+
+      ResponseEntity<LocaleDetails[]> response = restTemplate.exchange(request, LocaleDetails[].class);
+
+      return response.getBody();
+    } catch (RestClientException | URISyntaxException e) {
+      logger.warn("Could not load languages", e);
+    }
+    return new LocaleDetails[0];
   }
 
   @Override
@@ -257,5 +294,18 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
    */
   enum ContentState {
     New, NeedReview, Translated, Approved, Rejected
+  }
+
+  /**
+   * Represents the metadata of a single locale for the project.
+   */
+  static class LocaleDetails {
+    public String displayName;
+    public Boolean enabled;
+    public Boolean enabledByDefault;
+    public String localeId;
+    public String nativeName;
+    public String pluralForms;
+    public Boolean rtl;
   }
 }
