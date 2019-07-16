@@ -259,18 +259,6 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
   }
 
   @Override
-  protected String resolveCodeWithoutArguments(String code, Locale locale) {
-    TranslationsResource[] translations = loadTranslations(locale);
-
-    return Arrays.stream(translations)
-      .flatMap(translation -> translation.textFlowTargets.stream())
-      .filter(textFlowTarget -> textFlowTarget.resId.equals(code))
-      .map(tf -> tf.content)
-      .findFirst()
-      .orElse(null);
-  }
-
-  @Override
   public Properties getAllProperties(Locale locale) {
     Properties allProperties = new Properties();
 
