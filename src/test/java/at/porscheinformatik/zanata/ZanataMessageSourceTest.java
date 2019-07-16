@@ -205,7 +205,7 @@ public class ZanataMessageSourceTest {
       .expect(requestTo("https://my-zanata/zanata/rest/projects/p/"
         + messageSource.getProject()
         + "/iterations/i/myiteration/r/" + resource
-        + "/translations/" + locale.toString()))
+        + "/translations/" + locale.toString().replaceAll("_", "-"))
       .andRespond(withSuccess(objectMapper.writeValueAsString(answer2), MediaType.APPLICATION_JSON));
   }
 
