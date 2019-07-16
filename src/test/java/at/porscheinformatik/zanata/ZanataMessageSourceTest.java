@@ -18,6 +18,7 @@ import org.springframework.context.NoSuchMessageException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -31,6 +32,7 @@ public class ZanataMessageSourceTest {
   private static final ZanataMessageSource.TextFlowTarget TEXT_2 = new ZanataMessageSource.TextFlowTarget();
   private static final ZanataMessageSource.TextFlowTarget TEXT_3 = new ZanataMessageSource.TextFlowTarget();
   private static final ZanataMessageSource.TextFlowTarget TEXT_4 = new ZanataMessageSource.TextFlowTarget();
+  private static final ZanataMessageSource.TextFlowTarget TEXT_5 = new ZanataMessageSource.TextFlowTarget();
 
   static {
     TEXT_1.resId = "text1";
@@ -45,6 +47,9 @@ public class ZanataMessageSourceTest {
     TEXT_4.resId = "text3";
     TEXT_4.content = "Hi deer";
     TEXT_4.state = ZanataMessageSource.ContentState.Translated;
+    TEXT_5.resId = "text5";
+    TEXT_5.content = "My World";
+    TEXT_5.state = ZanataMessageSource.ContentState.Translated;
   }
 
   private MockRestServiceServer mockServer;
@@ -150,6 +155,22 @@ public class ZanataMessageSourceTest {
     messageSource.getMessage("text3", null, hu); // NoSuchMessageException
   }
 
+  @Test
+  public void testLanguageInheritance() throws JsonProcessingException
+  {
+    Locale locale3 = new Locale("hu", "HU", "VARIANT");
+    Locale locale2 = new Locale("hu", "HU");
+    Locale locale1 = new Locale("hu");
+    mockCall(localeToZanataLanguageTag(locale3), locale2.toLanguageTag(), locale1.toLanguageTag());
+    mockCall(locale3, TEXT_2);
+    mockCall(locale2, TEXT_1, TEXT_4);
+    mockCall(locale1, TEXT_3, TEXT_5);
+
+    assert TEXT_2.content.equals(messageSource.getMessage("text1", null, locale3));
+    assert TEXT_4.content.equals(messageSource.getMessage("text3", null, locale3));
+    assert TEXT_5.content.equals(messageSource.getMessage("text5", null, locale3));
+  }
+
   private void mockCall(Locale locale, ZanataMessageSource.TextFlowTarget... textFlowTarget)
       throws JsonProcessingException {
     mockCall(locale, "messages", textFlowTarget);
@@ -163,7 +184,7 @@ public class ZanataMessageSourceTest {
       .expect(requestTo("https://my-zanata/zanata/rest/projects/p/"
         + messageSource.getProject()
         + "/iterations/i/myiteration/r/" + resource
-        + "/translations/" + locale.toLanguageTag()))
+        + "/translations/" + localeToZanataLanguageTag(locale)))
       .andRespond(withSuccess(objectMapper.writeValueAsString(answer2), MediaType.APPLICATION_JSON));
   }
 
@@ -178,5 +199,18 @@ public class ZanataMessageSourceTest {
         + messageSource.getProject()
         + "/iterations/i/myiteration/locales"))
       .andRespond(withSuccess(objectMapper.writeValueAsString(answer.toArray()), MediaType.APPLICATION_JSON));
+  }
+
+
+  // the default implementation of locale.toLanguageTag does not append the variant the way it's needed for zanata
+  private String localeToZanataLanguageTag(Locale locale) {
+    String result = locale.getLanguage();
+    if(!StringUtils.isEmpty(locale.getCountry())){
+      result += "-" + locale.getCountry();
+    }
+    if(!StringUtils.isEmpty(locale.getVariant())){
+      result += "-" + locale.getVariant();
+    }
+    return result;
   }
 }
