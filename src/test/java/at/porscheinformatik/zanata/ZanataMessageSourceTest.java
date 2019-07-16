@@ -6,10 +6,8 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Before;
@@ -32,6 +30,8 @@ public class ZanataMessageSourceTest {
   private static final ZanataMessageSource.TextFlowTarget TEXT_3 = new ZanataMessageSource.TextFlowTarget();
   private static final ZanataMessageSource.TextFlowTarget TEXT_4 = new ZanataMessageSource.TextFlowTarget();
   private static final ZanataMessageSource.TextFlowTarget TEXT_5 = new ZanataMessageSource.TextFlowTarget();
+  private static final ZanataMessageSource.TextFlowTarget TEXT_WITH_ARGUMENT = new ZanataMessageSource.TextFlowTarget();
+  private static final ZanataMessageSource.TextFlowTarget TEXT_INVALID_ARGUMENT = new ZanataMessageSource.TextFlowTarget();
 
   static {
     TEXT_1.resId = "text1";
@@ -49,6 +49,12 @@ public class ZanataMessageSourceTest {
     TEXT_5.resId = "text5";
     TEXT_5.content = "My World";
     TEXT_5.state = ZanataMessageSource.ContentState.Translated;
+    TEXT_WITH_ARGUMENT.resId = "text6";
+    TEXT_WITH_ARGUMENT.content = "My argument is {0}";
+    TEXT_WITH_ARGUMENT.state = ZanataMessageSource.ContentState.Translated;
+    TEXT_INVALID_ARGUMENT.resId = "text7";
+    TEXT_INVALID_ARGUMENT.content = "I have an invalid {argument}";
+    TEXT_INVALID_ARGUMENT.state = ZanataMessageSource.ContentState.Translated;
   }
 
   private MockRestServiceServer mockServer;
@@ -155,8 +161,7 @@ public class ZanataMessageSourceTest {
   }
 
   @Test
-  public void testLanguageInheritance() throws JsonProcessingException
-  {
+  public void testLanguageInheritance() throws JsonProcessingException {
     Locale locale3 = new Locale("hu", "HU", "VARIANT");
     Locale locale2 = new Locale("hu", "HU");
     Locale locale1 = new Locale("hu");
@@ -168,6 +173,26 @@ public class ZanataMessageSourceTest {
     assert TEXT_2.content.equals(messageSource.getMessage("text1", null, locale3));
     assert TEXT_4.content.equals(messageSource.getMessage("text3", null, locale3));
     assert TEXT_5.content.equals(messageSource.getMessage("text5", null, locale3));
+  }
+
+  @Test
+  public void testMessageCodeWithArgument() throws JsonProcessingException {
+    mockCallLocales(Locale.GERMAN.toLanguageTag());
+    mockCallTranslations(Locale.GERMAN, TEXT_WITH_ARGUMENT, TEXT_INVALID_ARGUMENT);
+
+    assert "My argument is {0}".equals(messageSource.getMessage(TEXT_WITH_ARGUMENT.resId, null, Locale.GERMAN));
+    assert "My argument is test".equals(messageSource.getMessage(TEXT_WITH_ARGUMENT.resId, new Object[]{"test"}, Locale.GERMAN));
+
+    assert "I have an invalid {argument}".equals(messageSource.getMessage(TEXT_INVALID_ARGUMENT.resId, null, Locale.GERMAN));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testMessageCodeWithInvalidArgument() throws JsonProcessingException {
+    mockCallLocales(Locale.GERMAN.toLanguageTag());
+    mockCallTranslations(Locale.GERMAN, TEXT_WITH_ARGUMENT, TEXT_INVALID_ARGUMENT);
+
+    // should throw IllegalArgumentException
+    messageSource.getMessage(TEXT_INVALID_ARGUMENT.resId, new Object[]{"test"}, Locale.GERMAN);
   }
 
   private void mockCallTranslations(Locale locale, ZanataMessageSource.TextFlowTarget... textFlowTarget)

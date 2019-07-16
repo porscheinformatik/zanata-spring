@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -164,7 +165,8 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
     for (String baseName : basenameSet) {
 
       if (StringUtils.hasText(locale.getVariant())) {
-        TranslationsResource translation = loadTranslation(locale.getLanguage() + "-" + locale.getCountry() + "-" + locale.getVariant(), baseName);
+        TranslationsResource translation = loadTranslation(locale.getLanguage() + "-" + locale.getCountry()
+          + "-" + locale.getVariant(), baseName);
         if (translation != null) {
           translationList.add(translation);
         }
@@ -248,14 +250,25 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
 
   @Override
   protected MessageFormat resolveCode(String code, Locale locale) {
+    return resolveCodeTextFlowTarget(code, locale)
+      .map(tf -> new MessageFormat(tf.content, locale))
+      .orElse(null);
+  }
+
+  @Override
+  protected String resolveCodeWithoutArguments(String code, Locale locale) {
+    return resolveCodeTextFlowTarget(code, locale)
+      .map(tf -> tf.content)
+      .orElse(null);
+  }
+
+  private Optional<TextFlowTarget> resolveCodeTextFlowTarget(String code, Locale locale) {
     TranslationsResource[] translations = loadTranslations(locale);
 
     return Arrays.stream(translations)
       .flatMap(translation -> translation.textFlowTargets.stream())
       .filter(textFlowTarget -> textFlowTarget.resId.equals(code))
-      .map(tf -> new MessageFormat(tf.content, locale))
-      .findFirst()
-      .orElse(null);
+      .findFirst();
   }
 
   @Override
