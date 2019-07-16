@@ -205,10 +205,10 @@ public class ZanataMessageSourceTest {
   // the default implementation of locale.toLanguageTag does not append the variant the way it's needed for zanata
   private String localeToZanataLanguageTag(Locale locale) {
     String result = locale.getLanguage();
-    if(!StringUtils.isEmpty(locale.getCountry())){
+    if(StringUtils.hasText(locale.getCountry())){
       result += "-" + locale.getCountry();
     }
-    if(!StringUtils.isEmpty(locale.getVariant())){
+    if(StringUtils.hasText(locale.getVariant())){
       result += "-" + locale.getVariant();
     }
     return result;
