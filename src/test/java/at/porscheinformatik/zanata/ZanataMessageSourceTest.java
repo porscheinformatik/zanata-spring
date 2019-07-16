@@ -18,7 +18,6 @@ import org.springframework.context.NoSuchMessageException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -169,7 +168,6 @@ public class ZanataMessageSourceTest {
     Locale locale3 = new Locale("hu", "HU", "VARIANT");
     Locale locale2 = new Locale("hu", "HU");
     Locale locale1 = new Locale("hu");
-    mockCall(localeToZanataLanguageTag(locale3), locale2.toLanguageTag(), locale1.toLanguageTag());
     mockCall(locale3, TEXT_2);
     mockCall(locale2, TEXT_1, TEXT_4);
     mockCall(locale1, TEXT_3, TEXT_5);
@@ -207,7 +205,7 @@ public class ZanataMessageSourceTest {
       .expect(requestTo("https://my-zanata/zanata/rest/projects/p/"
         + messageSource.getProject()
         + "/iterations/i/myiteration/r/" + resource
-        + "/translations/" + localeToZanataLanguageTag(locale)))
+        + "/translations/" + locale.toString()))
       .andRespond(withSuccess(objectMapper.writeValueAsString(answer2), MediaType.APPLICATION_JSON));
   }
 
@@ -222,18 +220,5 @@ public class ZanataMessageSourceTest {
         + messageSource.getProject()
         + "/iterations/i/myiteration/locales"))
       .andRespond(withSuccess(objectMapper.writeValueAsString(answer.toArray()), MediaType.APPLICATION_JSON));
-  }
-
-
-  // the default implementation of locale.toLanguageTag does not append the variant the way it's needed for zanata
-  private String localeToZanataLanguageTag(Locale locale) {
-    String result = locale.getLanguage();
-    if(StringUtils.hasText(locale.getCountry())){
-      result += "-" + locale.getCountry();
-    }
-    if(StringUtils.hasText(locale.getVariant())){
-      result += "-" + locale.getVariant();
-    }
-    return result;
   }
 }
