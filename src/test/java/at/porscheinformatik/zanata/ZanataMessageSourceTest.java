@@ -33,6 +33,8 @@ public class ZanataMessageSourceTest {
   private static final ZanataMessageSource.TextFlowTarget TEXT_3 = new ZanataMessageSource.TextFlowTarget();
   private static final ZanataMessageSource.TextFlowTarget TEXT_4 = new ZanataMessageSource.TextFlowTarget();
   private static final ZanataMessageSource.TextFlowTarget TEXT_5 = new ZanataMessageSource.TextFlowTarget();
+  private static final ZanataMessageSource.TextFlowTarget TEXT_6 = new ZanataMessageSource.TextFlowTarget();
+  private static final ZanataMessageSource.TextFlowTarget TEXT_7 = new ZanataMessageSource.TextFlowTarget();
 
   static {
     TEXT_1.resId = "text1";
@@ -50,6 +52,12 @@ public class ZanataMessageSourceTest {
     TEXT_5.resId = "text5";
     TEXT_5.content = "My World";
     TEXT_5.state = ZanataMessageSource.ContentState.Translated;
+    TEXT_6.resId = "text6";
+    TEXT_6.content = "My argument is {0}";
+    TEXT_6.state = ZanataMessageSource.ContentState.Translated;
+    TEXT_7.resId = "text7";
+    TEXT_7.content = "I have an invalid {argument}";
+    TEXT_7.state = ZanataMessageSource.ContentState.Translated;
   }
 
   private MockRestServiceServer mockServer;
@@ -170,6 +178,21 @@ public class ZanataMessageSourceTest {
     assert TEXT_4.content.equals(messageSource.getMessage("text3", null, locale3));
     assert TEXT_5.content.equals(messageSource.getMessage("text5", null, locale3));
   }
+
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testMessageCodeWithArgument() throws JsonProcessingException
+  {
+    mockCall(Locale.GERMAN.toLanguageTag());
+    mockCall(Locale.GERMAN, TEXT_6, TEXT_7);
+
+    assert "My argument is {0}".equals(messageSource.getMessage("text6", null, Locale.GERMAN));
+    assert "My argument is test".equals(messageSource.getMessage("text6", new Object[]{"test"}, Locale.GERMAN));
+
+    assert "I have an invalid {argument}".equals(messageSource.getMessage("text7", null, Locale.GERMAN));
+    messageSource.getMessage("text7", new Object[]{"test"}, Locale.GERMAN); //should throw IllegalArgumentException
+  }
+
 
   private void mockCall(Locale locale, ZanataMessageSource.TextFlowTarget... textFlowTarget)
       throws JsonProcessingException {
