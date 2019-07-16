@@ -163,7 +163,14 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
 
     for (String baseName : basenameSet) {
 
-      if (!StringUtils.isEmpty(locale.getCountry())) {
+      if (StringUtils.hasText(locale.getVariant())) {
+        TranslationsResource translation = loadTranslation(locale.getLanguage() + "-" + locale.getCountry() + "-" + locale.getVariant(), baseName);
+        if (translation != null) {
+          translationList.add(translation);
+        }
+      }
+
+      if (StringUtils.hasText(locale.getCountry())) {
         TranslationsResource translation = loadTranslation(locale.getLanguage() + "-" + locale.getCountry(), baseName);
         if (translation != null) {
           translationList.add(translation);
