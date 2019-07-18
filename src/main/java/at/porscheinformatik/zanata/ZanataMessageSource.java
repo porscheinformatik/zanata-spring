@@ -41,6 +41,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
   private String zanataBaseUrl;
   private String project;
   private String iteration = "master";
+  private List<ZanataContentState> acceptStates = Arrays.asList(ZanataContentState.Translated, ZanataContentState.Approved);
 
   private Set<String> existingLocales;
   private final Object existingLocalesLock = new Object();
@@ -140,6 +141,17 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
       restTemplate = new RestTemplate();
     }
     restTemplate.setInterceptors(singletonList(new ZanataAuthenticationInterceptor(authUser, authToken)));
+  }
+
+  /**
+   * Sets which states Zanata will accept as Translation.
+   * Default is: Translated and Approved
+   *
+   * @param acceptStates
+   */
+  public void setAcceptStates(ZanataContentState... acceptStates)
+  {
+    this.acceptStates = Arrays.asList(acceptStates);
   }
 
   /**
@@ -268,6 +280,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
     return Arrays.stream(translations)
       .flatMap(translation -> translation.textFlowTargets.stream())
       .filter(textFlowTarget -> textFlowTarget.resId.equals(code))
+      .filter(textFlowTarget -> acceptStates.contains(textFlowTarget.state))
       .findFirst();
   }
 
@@ -305,15 +318,8 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
    */
   static class TextFlowTarget {
     public String resId;
-    public ContentState state;
+    public ZanataContentState state;
     public String content;
-  }
-
-  /**
-   * State of {@link TextFlowTarget}
-   */
-  enum ContentState {
-    New, NeedReview, Translated, Approved, Rejected
   }
 
   /**
