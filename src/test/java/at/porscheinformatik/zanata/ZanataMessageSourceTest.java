@@ -18,6 +18,8 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.RestTemplate;
 
+import at.porscheinformatik.zanata.ZanataMessageSource.ContentState;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -30,31 +32,35 @@ public class ZanataMessageSourceTest {
   private static final ZanataMessageSource.TextFlowTarget TEXT_3 = new ZanataMessageSource.TextFlowTarget();
   private static final ZanataMessageSource.TextFlowTarget TEXT_4 = new ZanataMessageSource.TextFlowTarget();
   private static final ZanataMessageSource.TextFlowTarget TEXT_5 = new ZanataMessageSource.TextFlowTarget();
+  private static final ZanataMessageSource.TextFlowTarget TEXT_6 = new ZanataMessageSource.TextFlowTarget();
   private static final ZanataMessageSource.TextFlowTarget TEXT_WITH_ARGUMENT = new ZanataMessageSource.TextFlowTarget();
   private static final ZanataMessageSource.TextFlowTarget TEXT_INVALID_ARGUMENT = new ZanataMessageSource.TextFlowTarget();
 
   static {
     TEXT_1.resId = "text1";
     TEXT_1.content = "Hallo Welt";
-    TEXT_1.state = ZanataMessageSource.ContentState.Translated;
+    TEXT_1.state = ContentState.Translated;
     TEXT_2.resId = "text1";
     TEXT_2.content = "Hallo Welt 2";
-    TEXT_2.state = ZanataMessageSource.ContentState.Translated;
+    TEXT_2.state = ContentState.Translated;
     TEXT_3.resId = "text3";
     TEXT_3.content = "Hy there";
-    TEXT_3.state = ZanataMessageSource.ContentState.Translated;
+    TEXT_3.state = ContentState.Translated;
     TEXT_4.resId = "text3";
     TEXT_4.content = "Hi deer";
-    TEXT_4.state = ZanataMessageSource.ContentState.Translated;
+    TEXT_4.state = ContentState.Translated;
     TEXT_5.resId = "text5";
     TEXT_5.content = "My World";
-    TEXT_5.state = ZanataMessageSource.ContentState.Translated;
+    TEXT_5.state = ContentState.Translated;
+    TEXT_6.resId = "text5";
+    TEXT_6.content = "";
+    TEXT_6.state = ContentState.New;
     TEXT_WITH_ARGUMENT.resId = "text6";
     TEXT_WITH_ARGUMENT.content = "My argument is {0}";
-    TEXT_WITH_ARGUMENT.state = ZanataMessageSource.ContentState.Translated;
+    TEXT_WITH_ARGUMENT.state = ContentState.Translated;
     TEXT_INVALID_ARGUMENT.resId = "text7";
     TEXT_INVALID_ARGUMENT.content = "I have an invalid {argument}";
-    TEXT_INVALID_ARGUMENT.state = ZanataMessageSource.ContentState.Translated;
+    TEXT_INVALID_ARGUMENT.state = ContentState.Translated;
   }
 
   private MockRestServiceServer mockServer;
@@ -166,7 +172,7 @@ public class ZanataMessageSourceTest {
     Locale locale2 = new Locale("hu", "HU");
     Locale locale1 = new Locale("hu");
     mockCallLocales(locale3.toString().replaceAll("_", "-"), locale2.toLanguageTag(), locale1.toLanguageTag());
-    mockCallTranslations(locale3, TEXT_2);
+    mockCallTranslations(locale3, TEXT_2, TEXT_6);
     mockCallTranslations(locale2, TEXT_1, TEXT_4);
     mockCallTranslations(locale1, TEXT_3, TEXT_5);
 
