@@ -18,6 +18,8 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.RestTemplate;
 
+import at.porscheinformatik.zanata.ZanataMessageSource.ContentState;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -37,28 +39,28 @@ public class ZanataMessageSourceTest {
   static {
     TEXT_1.resId = "text1";
     TEXT_1.content = "Hallo Welt";
-    TEXT_1.state = ZanataContentState.Translated;
+    TEXT_1.state = ContentState.Translated;
     TEXT_2.resId = "text1";
     TEXT_2.content = "Hallo Welt 2";
-    TEXT_2.state = ZanataContentState.Translated;
+    TEXT_2.state = ContentState.Translated;
     TEXT_3.resId = "text3";
     TEXT_3.content = "Hy there";
-    TEXT_3.state = ZanataContentState.Translated;
+    TEXT_3.state = ContentState.Translated;
     TEXT_4.resId = "text3";
     TEXT_4.content = "Hi deer";
-    TEXT_4.state = ZanataContentState.Translated;
+    TEXT_4.state = ContentState.Translated;
     TEXT_5.resId = "text5";
     TEXT_5.content = "My World";
-    TEXT_5.state = ZanataContentState.Translated;
+    TEXT_5.state = ContentState.Translated;
     TEXT_6.resId = "text5";
     TEXT_6.content = "";
-    TEXT_6.state = ZanataContentState.New;
+    TEXT_6.state = ContentState.New;
     TEXT_WITH_ARGUMENT.resId = "text6";
     TEXT_WITH_ARGUMENT.content = "My argument is {0}";
-    TEXT_WITH_ARGUMENT.state = ZanataContentState.Translated;
+    TEXT_WITH_ARGUMENT.state = ContentState.Translated;
     TEXT_INVALID_ARGUMENT.resId = "text7";
     TEXT_INVALID_ARGUMENT.content = "I have an invalid {argument}";
-    TEXT_INVALID_ARGUMENT.state = ZanataContentState.Translated;
+    TEXT_INVALID_ARGUMENT.state = ContentState.Translated;
   }
 
   private MockRestServiceServer mockServer;

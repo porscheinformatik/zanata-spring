@@ -41,7 +41,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
   private String zanataBaseUrl;
   private String project;
   private String iteration = "master";
-  private List<ZanataContentState> acceptStates = Arrays.asList(ZanataContentState.Translated, ZanataContentState.Approved);
+  private List<ContentState> acceptStates = Arrays.asList(ContentState.Translated, ContentState.Approved);
 
   private Set<String> existingLocales;
   private final Object existingLocalesLock = new Object();
@@ -149,7 +149,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
    *
    * @param acceptStates
    */
-  public void setAcceptStates(ZanataContentState... acceptStates)
+  public void setAcceptStates(ContentState... acceptStates)
   {
     this.acceptStates = Arrays.asList(acceptStates);
   }
@@ -318,8 +318,15 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
    */
   static class TextFlowTarget {
     public String resId;
-    public ZanataContentState state;
+    public ContentState state;
     public String content;
+  }
+
+  /**
+   * State of {@link TextFlowTarget}
+   */
+  enum ContentState {
+    New, NeedReview, Translated, Approved, Rejected
   }
 
   /**
