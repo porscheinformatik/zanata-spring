@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2019-07-25
+
+### Added
+ - Accept translations only when they are marked as Translated or Accepted.
+  Make it Configurable which states are accepted. (#13)
+
+## [1.6.0] - 2019-07-18
+
+### Added
+ - Load translations for variant locales such as de-DE-VARIANT (#9)
+
+### Fixed
+ - MessageFormat throws an error when texts contain curly brackets. Fixed by overwriting `resolveCodeWithoutArguments` of `AbstractMessageSource`
+
+## [1.5.0] - 2019-07-16
+
+### Changed
+ - Only load languages wich are maintained for the project (#8)
+
 ## [1.4.0] - 2019-05-29
 
 ### Added

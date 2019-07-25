@@ -147,7 +147,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
    * Sets which states Zanata will accept as Translation.
    * Default is: Translated and Approved
    *
-   * @param acceptStates
+   * @param acceptStates the accepted states
    */
   public void setAcceptStates(ContentState... acceptStates)
   {

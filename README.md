@@ -19,13 +19,13 @@ Add the Maven dependency to your project (find the current version on [Maven Cen
 
 Then declare the `ZanataMessageSource` as a bean. You can configure the `MessageSource` via:
 
- - zanataBaseUrl (required) - the base URL of your Zanaza instance 
+ - zanataBaseUrl (required) - the base URL of your Zanaza instance
  - project (required) - the project id
  - iteration - the iteration/version of the project, if not specified "master" will be used
  - baseNames - the message bundle names,  if not specified ["messages"] will be used
 
-Usually you might want to have the local message bundles as a backup when Zanata is not running. Therefore you can set 
-a `ResourceBundleMessageSource` as the parent of the `ZanataMessageSource`. 
+Usually you might want to have the local message bundles as a backup when Zanata is not running. Therefore you can set
+a `ResourceBundleMessageSource` as the parent of the `ZanataMessageSource`.
 
 Here is a full example bean configuration for a Spring Boot app (with "messages" as the default bundle):
 
@@ -49,6 +49,6 @@ public MessageSource messageSource() {
 If your Zanata instance needs authentication for accessing translations you can call `ZanataMessageSource#useAuthentcation` or provide your own `RestTemplate` and add a `ZanataAuthenticationInterceptor`.
 
 
-## Changes
+## Changes / Releases
 
 See [changelog](CHANGELOG.md).
