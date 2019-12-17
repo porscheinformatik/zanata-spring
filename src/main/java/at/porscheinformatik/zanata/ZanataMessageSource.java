@@ -224,14 +224,20 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
         + "/r/" + resourceName
         + "/translations/" + language);
 
-      RequestEntity request = RequestEntity.get(uri).accept(MediaType.APPLICATION_JSON).build();
+      RequestEntity<Void> request = RequestEntity.get(uri).accept(MediaType.APPLICATION_JSON).build();
 
       if (restTemplate == null) {
         restTemplate = new RestTemplate();
       }
       ResponseEntity<TranslationsResource> response = restTemplate.exchange(request, TranslationsResource.class);
 
-      return response.getBody();
+      TranslationsResource translation = response.getBody();
+      // ignore translations that are in a wrong state
+      if (translation != null && translation.textFlowTargets != null)
+      {
+        translation.textFlowTargets.removeIf(textFlowTarget -> !acceptStates.contains(textFlowTarget.state));
+      }
+      return translation;
     } catch (RestClientException | URISyntaxException e) {
       logger.warn("Could not load translations for lang " + language, e);
     }
@@ -245,7 +251,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
         + "/iterations/i/" + iteration
         + "/locales");
 
-      RequestEntity request = RequestEntity.get(uri).accept(MediaType.APPLICATION_JSON).build();
+      RequestEntity<Void> request = RequestEntity.get(uri).accept(MediaType.APPLICATION_JSON).build();
 
       if (restTemplate == null) {
         restTemplate = new RestTemplate();
@@ -280,7 +286,6 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
     return Arrays.stream(translations)
       .flatMap(translation -> translation.textFlowTargets.stream())
       .filter(textFlowTarget -> textFlowTarget.resId.equals(code))
-      .filter(textFlowTarget -> acceptStates.contains(textFlowTarget.state))
       .findFirst();
   }
 
