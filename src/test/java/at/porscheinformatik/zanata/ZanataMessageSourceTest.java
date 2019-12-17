@@ -25,10 +25,6 @@ import at.porscheinformatik.zanata.ZanataMessageSource.ContentState;
 
 public class ZanataMessageSourceTest {
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
-  private ZanataMessageSource messageSource;
-  private ZanataMessageSource messageSourceWithFallback;
-  
   private static final ZanataMessageSource.TextFlowTarget TEXT_1 = new ZanataMessageSource.TextFlowTarget();
   private static final ZanataMessageSource.TextFlowTarget TEXT_2 = new ZanataMessageSource.TextFlowTarget();
   private static final ZanataMessageSource.TextFlowTarget TEXT_3 = new ZanataMessageSource.TextFlowTarget();
@@ -69,21 +65,24 @@ public class ZanataMessageSourceTest {
     TEXT_INVALID_ARGUMENT.state = ContentState.Translated;
   }
 
+  private final ObjectMapper objectMapper = new ObjectMapper();
+  private ZanataMessageSource messageSource;
+  private ZanataMessageSource messageSourceWithFallback;
   private MockRestServiceServer mockServer;
 
   @Before
   public void setup() {
     RestTemplate restTemplate = new RestTemplate();
-    
+
     messageSource = createZanataMessageSource(restTemplate);
     messageSourceWithFallback = createZanataMessageSource(restTemplate);
-    
+
     final AllPropertiesReloadableResourceBundleMessageSource localMessageSource =
         new AllPropertiesReloadableResourceBundleMessageSource();
     localMessageSource.setBasename("messages");
     localMessageSource.setFallbackToSystemLocale(false);
     messageSourceWithFallback.setParentMessageSource(localMessageSource);
-    
+
     mockServer = MockRestServiceServer.createServer(restTemplate);
   }
 
@@ -97,7 +96,7 @@ public class ZanataMessageSourceTest {
     messageSource.useAuthentcation("user", "token");
     return messageSource;
   }
-  
+
   @After
   public void verify() {
     mockServer.verify();
@@ -227,14 +226,14 @@ public class ZanataMessageSourceTest {
     mockCallTranslations(Locale.GERMAN, TEXT_7);
 
     // should ignore the TEXT_7 translation from Zanata (invalid state!) and fall back to messages.properties
-      
+
     Properties allProperties = messageSourceWithFallback.getAllProperties(Locale.GERMAN);
     assert allProperties.containsKey(TEXT_7.resId);
     assert "Translation from file".equals(allProperties.get(TEXT_7.resId));
-      
+
     assert "Translation from file".equals(messageSourceWithFallback.getMessage(TEXT_7.resId, null, Locale.GERMAN));
   }
-  
+
   private void mockCallTranslations(Locale locale, ZanataMessageSource.TextFlowTarget... textFlowTarget)
       throws JsonProcessingException {
     mockCallTranslations(locale, "messages", textFlowTarget);

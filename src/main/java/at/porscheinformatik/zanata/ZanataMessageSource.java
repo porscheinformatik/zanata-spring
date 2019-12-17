@@ -235,7 +235,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
       // ignore translations that are in a wrong state
       if (translation != null && translation.textFlowTargets != null)
       {
-        translation.textFlowTargets.removeIf((textFlowTarget) -> !acceptStates.contains(textFlowTarget.state));
+        translation.textFlowTargets.removeIf(textFlowTarget -> !acceptStates.contains(textFlowTarget.state));
       }
       return translation;
     } catch (RestClientException | URISyntaxException e) {
