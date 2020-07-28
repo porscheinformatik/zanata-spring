@@ -165,10 +165,27 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
     translationsCache.clear();
   }
 
-  private TranslationsResource[] loadTranslations(Locale locale) {
+  /**
+   * Reloads the translations for the given locales from zanata. Only if the translations from zanata could be loaded,
+   * the translation cache will be updated
+   * @param locales the locales that should be reloaded
+   */
+  public void reload(Locale ... locales) {
+    logger.info("Going to reload the translations ...");
+
+    if(locales != null && locales.length > 0) {
+      for(Locale locale : locales) {
+        logger.info(String.format("Reload translation for locale %s", locale));
+        loadTranslations(locale, true);
+      }
+    }
+  }
+
+
+  private TranslationsResource[] loadTranslations(Locale locale, boolean forceReload) {
     TranslationsResource[] translations = translationsCache.get(locale);
 
-    if (translations != null) {
+    if (translations != null && !forceReload) {
       return translations;
     }
 
@@ -281,7 +298,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
   }
 
   private Optional<TextFlowTarget> resolveCodeTextFlowTarget(String code, Locale locale) {
-    TranslationsResource[] translations = loadTranslations(locale);
+    TranslationsResource[] translations = loadTranslations(locale, false);
 
     return Arrays.stream(translations)
       .flatMap(translation -> translation.textFlowTargets.stream())
@@ -293,7 +310,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
   public Properties getAllProperties(Locale locale) {
     Properties allProperties = new Properties();
 
-    final TranslationsResource[] translationsResources = loadTranslations(locale);
+    final TranslationsResource[] translationsResources = loadTranslations(locale, false);
     if (translationsResources != null && translationsResources.length > 0) {
       for (TranslationsResource translationsResource : translationsResources) {
         translationsResource.textFlowTargets.stream()

@@ -125,6 +125,18 @@ public class ZanataMessageSourceTest {
   }
 
   @Test
+  public void reload() throws JsonProcessingException
+  {
+    mockCallLocales(Locale.GERMAN.toLanguageTag());
+    mockCallTranslations(Locale.GERMAN, TEXT_1);
+    mockCallTranslations(Locale.GERMAN, TEXT_2);
+
+    assert "Hallo Welt".equals(messageSource.getMessage("text1", null, Locale.GERMAN));
+    messageSource.reload(Locale.GERMAN, Locale.FRENCH);
+    assert "Hallo Welt 2".equals(messageSource.getMessage("text1", null, Locale.GERMAN));
+  }
+
+  @Test
   public void langAndCountry() throws JsonProcessingException {
     mockCallLocales(Locale.GERMAN.toLanguageTag(), Locale.GERMANY.toLanguageTag());
     mockCallTranslations(Locale.GERMANY, TEXT_2);
