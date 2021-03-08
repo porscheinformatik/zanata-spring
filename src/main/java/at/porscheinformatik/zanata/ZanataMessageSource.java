@@ -141,8 +141,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
    * @param authToken Zanata API token
    */
   public void useAuthentcation(String authUser, String authToken) {
-    ensureRestTemplate();
-    restTemplate.setInterceptors(singletonList(new ZanataAuthenticationInterceptor(authUser, authToken)));
+    getRestTemplate().setInterceptors(singletonList(new ZanataAuthenticationInterceptor(authUser, authToken)));
   }
 
   /**
@@ -245,8 +244,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
 
       RequestEntity<Void> request = RequestEntity.get(uri).accept(MediaType.APPLICATION_JSON).build();
 
-      ensureRestTemplate();
-      ResponseEntity<TranslationsResource> response = restTemplate.exchange(request, TranslationsResource.class);
+      ResponseEntity<TranslationsResource> response = getRestTemplate().exchange(request, TranslationsResource.class);
 
       TranslationsResource translation = response.getBody();
       // ignore translations that are in a wrong state
@@ -270,9 +268,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
 
       RequestEntity<Void> request = RequestEntity.get(uri).accept(MediaType.APPLICATION_JSON).build();
 
-      ensureRestTemplate();
-
-      ResponseEntity<LocaleDetails[]> response = restTemplate.exchange(request, LocaleDetails[].class);
+      ResponseEntity<LocaleDetails[]> response = getRestTemplate().exchange(request, LocaleDetails[].class);
 
       return response.getBody();
     } catch (RestClientException | URISyntaxException e) {
@@ -326,15 +322,15 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
     return allProperties;
   }
 
-  private void ensureRestTemplate() {
+  private RestTemplate getRestTemplate() {
     if (restTemplate == null) {
       SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
       factory.setConnectTimeout(TIMEOUT);
       factory.setReadTimeout(TIMEOUT);
-      this.restTemplate = new RestTemplate(factory);
+      restTemplate = new RestTemplate(factory);
     }
+    return restTemplate;
   }
-
 
   /**
    * Represents the translation of a document into a single locale.
