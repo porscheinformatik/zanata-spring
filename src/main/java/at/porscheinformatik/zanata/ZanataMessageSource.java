@@ -22,6 +22,7 @@ import org.springframework.context.support.AbstractMessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -36,6 +37,9 @@ import org.springframework.web.client.RestTemplate;
  * </p>
  */
 public class ZanataMessageSource extends AbstractMessageSource implements AllPropertiesSource {
+
+  // 30 seconds
+  private static final int TIMEOUT = 30 * 1000;
 
   private RestTemplate restTemplate;
   private String zanataBaseUrl;
@@ -137,9 +141,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
    * @param authToken Zanata API token
    */
   public void useAuthentcation(String authUser, String authToken) {
-    if (restTemplate == null) {
-      restTemplate = new RestTemplate();
-    }
+    ensureRestTemplate();
     restTemplate.setInterceptors(singletonList(new ZanataAuthenticationInterceptor(authUser, authToken)));
   }
 
@@ -243,9 +245,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
 
       RequestEntity<Void> request = RequestEntity.get(uri).accept(MediaType.APPLICATION_JSON).build();
 
-      if (restTemplate == null) {
-        restTemplate = new RestTemplate();
-      }
+      ensureRestTemplate();
       ResponseEntity<TranslationsResource> response = restTemplate.exchange(request, TranslationsResource.class);
 
       TranslationsResource translation = response.getBody();
@@ -270,9 +270,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
 
       RequestEntity<Void> request = RequestEntity.get(uri).accept(MediaType.APPLICATION_JSON).build();
 
-      if (restTemplate == null) {
-        restTemplate = new RestTemplate();
-      }
+      ensureRestTemplate();
 
       ResponseEntity<LocaleDetails[]> response = restTemplate.exchange(request, LocaleDetails[].class);
 
@@ -327,6 +325,16 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
 
     return allProperties;
   }
+
+  private void ensureRestTemplate() {
+    if (restTemplate == null) {
+      SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+      factory.setConnectTimeout(TIMEOUT);
+      factory.setReadTimeout(TIMEOUT);
+      this.restTemplate = new RestTemplate(factory);
+    }
+  }
+
 
   /**
    * Represents the translation of a document into a single locale.
