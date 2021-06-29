@@ -351,7 +351,7 @@ public class ZanataMessageSource extends AbstractMessageSource implements AllPro
   /**
    * State of {@link TextFlowTarget}
    */
-  enum ContentState {
+  public enum ContentState {
     New, NeedReview, Translated, Approved, Rejected
   }
 
